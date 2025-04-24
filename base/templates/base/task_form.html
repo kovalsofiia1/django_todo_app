@@ -2,21 +2,25 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>{% if task %}Редагувати{% else %}Нова{% endif %} задача</title>
+    <title>Задача</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6">
     <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 class="text-xl font-bold mb-4">{% if task %}Редагувати{% else %}Додати{% endif %} задачу</h1>
+        <h1 class="text-xl font-bold mb-4">{{ task.title|default:'Нова задача' }}</h1>
         <form method="post">
             {% csrf_token %}
-            <input type="text" name="title" placeholder="Назва задачі" value="{{ task.title|default:'' }}" class="border p-2 w-full mb-4 rounded" required />
+            <input type="text" name="title" value="{{ task.title|default:'' }}" placeholder="Назва задачі" class="border p-2 w-full mb-4 rounded" required />
+
             <select name="collection" class="border p-2 w-full mb-4 rounded">
                 {% for col in collections %}
-                    <option value="{{ col }}" {% if task.collection == col %}selected{% endif %}>{{ col }}</option>
+                    <option value="{{ col.id }}" {% if task.collection == col %}selected{% endif %}>{{ col.name }}</option>
                 {% endfor %}
             </select>
-            <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Зберегти</button>
+
+            <input type="date" name="deadline" value="{{ task.deadline|default:'' }}" class="border p-2 w-full mb-4 rounded" />
+
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Зберегти</button>
         </form>
     </div>
 </body>

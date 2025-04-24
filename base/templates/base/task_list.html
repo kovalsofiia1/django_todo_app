@@ -11,15 +11,29 @@
             <h1 class="text-2xl font-bold">Задачі</h1>
             <a href="/collections/" class="text-blue-500 hover:underline">Колекції</a>
         </div>
-        <form method="get" class="mb-4">
+        <form method="get" class="mb-4 space-y-2">
             <input type="text" name="search" placeholder="Пошук..." value="{{ search }}" class="border p-2 w-full rounded" />
+            <select name="collection" class="border p-2 w-full rounded">
+                <option value="">Всі колекції</option>
+                {% for col in collections %}
+                    <option value="{{ col.id }}" {% if selected_col == col.id %}selected{% endif %}>{{ col.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="bg-blue-500 text-white ml-auto px-4 py-2 rounded hover:bg-blue-600">Фільтрувати</button>
         </form>
+
         <a href="/add/" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Додати задачу</a>
         <ul>
             {% for task in tasks %}
                 <li class="flex items-center justify-between mb-2 p-2 border rounded {% if task.done %}bg-green-100{% else %}bg-red-100{% endif %}">
-                    <span>{{ task.title }} ({{ task.collection }})</span>
                     <div>
+                        <span class="block font-semibold">{{ task.title }}</span>
+                        <span class="text-sm text-gray-600">Колекція: {{ task.collection_name }}</span><br>
+                        {% if task.deadline %}
+                            <span class="text-sm text-gray-500">Дедлайн: {{ task.deadline }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="ml-4">
                         <a href="/complete/{{ task.id }}/" class="text-sm text-blue-600 mr-2">[виконати]</a>
                         <a href="/edit/{{ task.id }}/" class="text-sm text-yellow-600 mr-2">[редагувати]</a>
                         <a href="/delete/{{ task.id }}/" class="text-sm text-red-600">[видалити]</a>
