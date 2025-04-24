@@ -1,48 +1,47 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Планувальник задач</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 p-6">
-    <div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-2xl font-bold">Задачі</h1>
-            <a href="/collections/" class="text-blue-500 hover:underline">Колекції</a>
-        </div>
-        <form method="get" class="mb-4 space-y-2">
-            <input type="text" name="search" placeholder="Пошук..." value="{{ search }}" class="border p-2 w-full rounded" />
-            <select name="collection" class="border p-2 w-full rounded">
-                <option value="">Всі колекції</option>
-                {% for col in collections %}
-                    <option value="{{ col.id }}" {% if selected_col == col.id %}selected{% endif %}>{{ col.name }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="bg-blue-500 text-white ml-auto px-4 py-2 rounded hover:bg-blue-600">Фільтрувати</button>
-        </form>
+{% extends 'base/base.html' %}
 
-        <a href="/add/" class="inline-block mb-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Додати задачу</a>
-        <ul>
-            {% for task in tasks %}
-                <li class="flex items-center justify-between mb-2 p-2 border rounded {% if task.done %}bg-green-100{% else %}bg-red-100{% endif %}">
-                    <div>
-                        <span class="block font-semibold">{{ task.title }}</span>
-                        <span class="text-sm text-gray-600">Колекція: {{ task.collection_name }}</span><br>
-                        {% if task.deadline %}
-                            <span class="text-sm text-gray-500">Дедлайн: {{ task.deadline }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="ml-4">
-                        <a href="/complete/{{ task.id }}/" class="text-sm text-blue-600 mr-2">[виконати]</a>
-                        <a href="/edit/{{ task.id }}/" class="text-sm text-yellow-600 mr-2">[редагувати]</a>
-                        <a href="/delete/{{ task.id }}/" class="text-sm text-red-600">[видалити]</a>
-                    </div>
-                </li>
-            {% empty %}
-                <li>Задач не знайдено.</li>
-            {% endfor %}
-        </ul>
+{% block title %}Мої задачі{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold">Мої задачі</h2>
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'add_task' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow">
+            + Додати задачу
+        </a>
+        <a href="{% url 'collection_list' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
+            Колекції
+        </a>
     </div>
-</body>
-</html>
+</div>
+
+{% if tasks %}
+    <ul class="space-y-4">
+        {% for task in tasks %}
+           <li class="bg-white p-4 rounded shadow-md">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg font-semibold">{{ task.title }}</h3>
+                    {% if task.deadline %}
+                        <p class="text-gray-600 text-sm">Дедлайн: {{ task.deadline }}</p>
+                    {% endif %}
+                    {% if task.collection %}
+                        <p class="text-gray-600 text-sm">Колекція: {{ task.collection.name }}</p>
+                    {% endif %}
+                </div>
+                <div class="flex gap-4 items-center">
+                    <a href="{% url 'edit_task' task.id %}" class="text-blue-500 hover:underline">Редагувати</a>
+                    <form method="post" action="{% url 'delete_task' task.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="text-red-500 hover:underline">Видалити</button>
+                    </form>
+                </div>
+            </div>
+        </li>
+
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="text-gray-600">Задач поки немає. Додайте нову!</p>
+{% endif %}
+{% endblock %}

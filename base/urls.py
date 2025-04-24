@@ -16,7 +16,7 @@ path('welcome/', views.welcome, name='welcome'),
 
     # Колекції
     path('collections/', views.collection_list, name='collection_list'),
-    path('collections/add/', views.add_collection, name='add_collection'),
-    path('collections/edit/<int:col_id>/', views.edit_collection, name='edit_collection'),
+    path('collections/add/', views.add_or_edit_collection, name='add_collection'),
+    path('collections/edit/<int:col_id>/', views.add_or_edit_collection, name='edit_collection'),
     path('collections/delete/<int:col_id>/', views.delete_collection, name='delete_collection'),
 ]

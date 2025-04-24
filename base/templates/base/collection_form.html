@@ -2,16 +2,26 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Колекція</title>
+    <title>{% if collection %}Редагувати{% else %}Додати{% endif %} колекцію</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 p-6">
-    <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
-        <h1 class="text-xl font-bold mb-4">{{ name|default:"Нова колекція" }}</h1>
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-2xl font-bold">{% if collection %}Редагувати{% else %}Додати{% endif %} колекцію</h1>
+            <a href="{% url 'collection_list' %}" class="text-blue-500 hover:underline">← Назад до колекцій</a>
+        </div>
         <form method="post">
             {% csrf_token %}
-            <input type="text" name="name" value="{{ name|default:'' }}" placeholder="Назва колекції" class="border p-2 w-full rounded mb-4" required />
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Зберегти</button>
+            <div class="mb-4">
+                <label for="name" class="block text-sm font-semibold text-gray-700">Назва колекції</label>
+                <input type="text" name="name" id="name"
+                    value="{% if collection %}{{ collection.name }}{% else %}{{ '' }}{% endif %}"
+                    class="mt-2 block w-full border border-gray-300 rounded p-2" required>
+            </div>
+            <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                {% if collection %}Оновити{% else %}Додати{% endif %} колекцію
+            </button>
         </form>
     </div>
 </body>

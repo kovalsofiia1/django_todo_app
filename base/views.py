@@ -1,9 +1,10 @@
-from django.shortcuts import render, redirect
-from .data import tasks, collections
-from datetime import datetime
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Task, Collection
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
+
 
 def register(request):
     if request.method == 'POST':
@@ -16,116 +17,184 @@ def register(request):
         form = UserCreationForm()
     return render(request, 'base/register.html', {'form': form})
 
+
 def welcome(request):
     if request.user.is_authenticated:
         return redirect('task_list')
     return render(request, 'base/welcome.html')
 
 
-def get_collection_name(cid):
-    col = next((c for c in collections if c['id'] == cid), None)
-    return col['name'] if col else 'Невідомо'
-
 @login_required
 def task_list(request):
     search_query = request.GET.get('search', '')
     selected_col = request.GET.get('collection')
-    selected_col = int(selected_col) if selected_col and selected_col.isdigit() else None
 
-    filtered_tasks = tasks
+    tasks = Task.objects.filter(owner=request.user)
+
     if search_query:
-        filtered_tasks = [t for t in filtered_tasks if search_query.lower() in t['title'].lower()]
+        tasks = tasks.filter(title__icontains=search_query)
     if selected_col:
-        filtered_tasks = [t for t in filtered_tasks if t['collection'] == selected_col]
-
-    # Додаємо 'collection_name' до кожного завдання
-    for task in filtered_tasks:
-        task['collection_name'] = get_collection_name(task['collection'])
+        tasks = tasks.filter(collection__id=selected_col)
 
     return render(request, 'base/task_list.html', {
-        'tasks': filtered_tasks,
+        'tasks': tasks,
         'search': search_query,
-        'collections': collections,
-        'selected_col': selected_col,
-        'get_collection_name': get_collection_name
+        'collections': Collection.objects.filter(owner=request.user),
+        'selected_col': selected_col
     })
+
+
 @login_required
 def add_task(request):
+    error = ''
     if request.method == 'POST':
-        title = request.POST['title']
-        collection = int(request.POST.get('collection', '1'))
-        deadline = request.POST.get('deadline')
-        tasks.append({
-            'id': len(tasks)+1,
-            'title': title,
-            'done': False,
-            'collection': collection,
-            'deadline': deadline
-        })
-        return redirect('task_list')
-    return render(request, 'base/task_form.html', {'collections': collections})
+        title = request.POST['title'].strip()
+        deadline = request.POST.get('deadline', '').strip()
+        collection_id = request.POST.get('collection')
+        collection = None
+
+        if collection_id:
+            try:
+                collection = Collection.objects.get(id=collection_id, owner=request.user)
+            except Collection.DoesNotExist:
+                collection = None
+
+        # Перевірка формату дати
+        if deadline:
+            try:
+                from datetime import datetime
+                datetime.strptime(deadline, '%Y-%m-%d')  # Перевірка формату
+            except ValueError:
+                error = 'Невірний формат дати. Використовуйте YYYY-MM-DD.'
+
+        if not error:
+            Task.objects.create(
+                title=title,
+                collection=collection,
+                deadline=deadline if deadline else None,
+                owner=request.user
+            )
+            return redirect('task_list')
+
+    collections = Collection.objects.filter(owner=request.user)
+    return render(request, 'base/add_task.html', {
+        'collections': collections,
+        'error': error,
+        'task': request.POST  # щоб заповнити попередні значення
+    })
+
 
 @login_required
 def complete_task(request, task_id):
-    for t in tasks:
-        if t['id'] == task_id:
-            t['done'] = not t['done']
-            break
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
+    task.done = not task.done
+    task.save()
     return redirect('task_list')
+
 
 @login_required
 def delete_task(request, task_id):
-    global tasks
-    tasks = [t for t in tasks if t['id'] != task_id]
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
+    task.delete()
     return redirect('task_list')
+
 
 @login_required
 def edit_task(request, task_id):
-    task = next((t for t in tasks if t['id'] == task_id), None)
-    if not task:
-        return redirect('task_list')
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
+    error = ''
 
     if request.method == 'POST':
-        task['title'] = request.POST['title']
-        task['collection'] = int(request.POST.get('collection', '1'))
-        task['deadline'] = request.POST.get('deadline')
-        return redirect('task_list')
+        title = request.POST['title'].strip()
+        deadline = request.POST.get('deadline', '').strip()
+        collection_id = request.POST.get('collection')
+        collection = None
 
-    return render(request, 'base/task_form.html', {'task': task, 'collections': collections})
+        if collection_id:
+            try:
+                collection = Collection.objects.get(id=collection_id, owner=request.user)
+            except Collection.DoesNotExist:
+                collection = None
 
-@login_required
-def collection_list(request):
-    for col in collections:
-        col['count'] = sum(1 for t in tasks if t['collection'] == col['id'])
+        # Перевірка формату дати
+        if deadline:
+            try:
+                from datetime import datetime
+                datetime.strptime(deadline, '%Y-%m-%d')  # Перевірка формату
+            except ValueError:
+                error = 'Невірний формат дати. Використовуйте YYYY-MM-DD.'
 
-    return render(request, 'base/collection_list.html', {
-        'collections': collections
+        if not error:
+            task.title = title
+            task.deadline = deadline if deadline else None
+            task.collection = collection
+            task.save()
+            return redirect('task_list')
+
+    return render(request, 'base/task_form.html', {
+        'task': task,
+        'collections': Collection.objects.filter(owner=request.user),
+        'error': error
     })
 
 @login_required
-def add_collection(request):
-    if request.method == 'POST':
-        name = request.POST['name']
-        if name:
-            collections.append({'id': max([c['id'] for c in collections], default=0)+1, 'name': name})
-        return redirect('collection_list')
-    return render(request, 'base/collection_form.html')
+def collection_list(request):
+    collections = Collection.objects.filter(owner=request.user)
+    return render(request, 'base/collection_list.html', {'collections': collections})
+
+
+# @login_required
+# def add_collection(request):
+#     if request.method == 'POST':
+#         name = request.POST['name']
+#         Collection.objects.create(name=name, owner=request.user)
+#         return redirect('collection_list')
+#     return render(request, 'base/collection_form.html')
+#
 
 @login_required
 def delete_collection(request, col_id):
-    global tasks, collections
-    collections = [c for c in collections if c['id'] != col_id]
-    tasks = [t for t in tasks if t['collection'] != col_id]
+    collection = get_object_or_404(Collection, id=col_id, owner=request.user)
+    collection.delete()
     return redirect('collection_list')
 
+
+# @login_required
+# def edit_collection(request, col_id):
+#     collection = get_object_or_404(Collection, id=col_id, owner=request.user)
+#
+#     if request.method == 'POST':
+#         collection.name = request.POST['name']
+#         collection.save()
+#         return redirect('collection_list')
+#
+#     return render(request, 'base/collection_form.html', {'collection': collection})
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import Http404
+from .models import Collection
+from django.contrib.auth.decorators import login_required
+
+
 @login_required
-def edit_collection(request, col_id):
-    collection = next((c for c in collections if c['id'] == col_id), None)
-    if not collection:
-        return redirect('collection_list')
+def add_or_edit_collection(request, col_id=None):
+    # Якщо col_id є, це редагування існуючої колекції
+    if col_id:
+        collection = get_object_or_404(Collection, id=col_id, owner=request.user)
+    else:
+        collection = None
 
     if request.method == 'POST':
-        new_name = request.POST['name']
-        collection['name'] = new_name
+        name = request.POST['name']
+
+        # Якщо це редагування, зберігаємо зміни
+        if collection:
+            collection.name = name
+            collection.save()
+        # Якщо це створення нової колекції
+        else:
+            Collection.objects.create(name=name, owner=request.user)
+
         return redirect('collection_list')
-    return render(request, 'base/collection_form.html', {'name': collection['name'], 'col_id': collection['id']})
+
+    return render(request, 'base/collection_form.html', {'collection': collection})
+
