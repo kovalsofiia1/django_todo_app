@@ -15,6 +15,24 @@
     </div>
 </div>
 
+<!-- Форма для пошуку та фільтрації -->
+<form method="get" action="{% url 'task_list' %}" class="mb-6 flex gap-4 items-center">
+    <input type="text" name="query" value="{{ query }}" placeholder="Пошук за назвою" class="border p-2 rounded">
+
+    <select name="collection" class="border p-2 rounded">
+        <option value="">Всі колекції</option>
+        {% for col in collections %}
+            <option value="{{ col.id }}" {% if collection_filter == col.id|stringformat:"d" %}selected{% endif %}>
+                {{ col.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
+        Пошук
+    </button>
+</form>
+
 {% if tasks %}
     <ul class="space-y-4">
         {% for task in tasks %}
@@ -38,7 +56,6 @@
                 </div>
             </div>
         </li>
-
         {% endfor %}
     </ul>
 {% else %}
