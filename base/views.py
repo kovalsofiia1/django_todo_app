@@ -87,11 +87,10 @@ def add_task(request):
 
 @login_required
 def complete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id, owner=request.user)
-    task.done = not task.done
+    task = get_object_or_404(Task, id=task_id)
+    task.done = not task.done  # Перемикаємо статус виконаного завдання
     task.save()
-    return redirect('task_list')
-
+    return redirect('task_list')  # Після зміни статусу повертаємося на список завдань
 
 @login_required
 def delete_task(request, task_id):

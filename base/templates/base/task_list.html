@@ -36,26 +36,33 @@
 {% if tasks %}
     <ul class="space-y-4">
         {% for task in tasks %}
-           <li class="bg-white p-4 rounded shadow-md">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h3 class="text-lg font-semibold">{{ task.title }}</h3>
-                    {% if task.deadline %}
-                        <p class="text-gray-600 text-sm">Дедлайн: {{ task.deadline }}</p>
-                    {% endif %}
-                    {% if task.collection %}
-                        <p class="text-gray-600 text-sm">Колекція: {{ task.collection.name }}</p>
-                    {% endif %}
+            <li class="p-4 rounded shadow-md {% if task.done %}bg-green-200{% else %}bg-red-200{% endif %}">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold">{{ task.title }}</h3>
+                        {% if task.deadline %}
+                            <p class="text-gray-600 text-sm">Дедлайн: {{ task.deadline }}</p>
+                        {% endif %}
+                        {% if task.collection %}
+                            <p class="text-gray-600 text-sm">Колекція: {{ task.collection.name }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <a href="{% url 'edit_task' task.id %}" class="text-blue-500 hover:underline">Редагувати</a>
+                        <form method="post" action="{% url 'delete_task' task.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="text-red-500 hover:underline">Видалити</button>
+                        </form>
+                        <a href="{% url 'complete_task' task.id %}" class="text-green-500 hover:underline">
+                            {% if task.done %}
+                                Помітити як невиконане
+                            {% else %}
+                                Помітити як виконане
+                            {% endif %}
+                        </a>
+                    </div>
                 </div>
-                <div class="flex gap-4 items-center">
-                    <a href="{% url 'edit_task' task.id %}" class="text-blue-500 hover:underline">Редагувати</a>
-                    <form method="post" action="{% url 'delete_task' task.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="text-red-500 hover:underline">Видалити</button>
-                    </form>
-                </div>
-            </div>
-        </li>
+            </li>
         {% endfor %}
     </ul>
 {% else %}
