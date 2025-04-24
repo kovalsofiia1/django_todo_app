@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Колекції</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-xl font-bold">Колекції</h1>
+            <a href="/" class="text-blue-500 hover:underline">← Назад до задач</a>
+        </div>
+        <a href="/collections/add/" class="mb-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Додати колекцію</a>
+        <ul class="list-disc pl-6 space-y-2">
+            {% for col in collections %}
+                <li class="flex justify-between items-center">
+                    <span>{{ col.name }} ({{ col.count }} задач)</span>
+                    <div>
+                        <a href="/collections/edit/{{ col.name }}/" class="text-sm text-yellow-600 mr-2">[редагувати]</a>
+                        <a href="/collections/delete/{{ col.name }}/" class="text-sm text-red-600">[видалити]</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
