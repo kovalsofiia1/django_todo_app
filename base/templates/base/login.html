@@ -1,0 +1,33 @@
+{% load widget_tweaks %}
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Вхід</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold mb-6 text-center">Вхід</h1>
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="block mb-1 text-lg font-medium text-gray-700">{{ field.label }}</label>
+                    {{ field|add_class:"w-full py-3 px-4 border-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-300 text-lg" }}
+
+                    {% if field.errors %}
+                        <p class="text-red-500 text-sm mt-1">{{ field.errors|join:", " }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="w-full bg-blue-600 text-white text-lg py-3 rounded-lg hover:bg-blue-700 transition">Увійти</button>
+        </form>
+        <p class="mt-6 text-center text-gray-600 text-sm">
+            Ще не маєте облікового запису?
+            <a href="{% url 'register' %}" class="text-blue-500 hover:underline">Зареєструйтесь</a>
+        </p>
+    </div>
+</body>
+</html>
