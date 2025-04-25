@@ -3,69 +3,53 @@
 {% block title %}Мої задачі{% endblock %}
 
 {% block content %}
-<div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold">Мої задачі</h2>
-    <div class="flex items-center space-x-4">
-        <a href="{% url 'add_task' %}" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow">
-            + Додати задачу
-        </a>
-        <a href="{% url 'collection_list' %}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
-            Колекції
-        </a>
+<div class="bg-white p-6 rounded-xl shadow-md max-w-3xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">Задачі</h1>
+        <a href="{% url 'collection_list' %}" class="text-blue-500 hover:underline">Колекції</a>
     </div>
-</div>
 
-<!-- Форма для пошуку та фільтрації -->
-<form method="get" action="{% url 'task_list' %}" class="mb-6 flex gap-4 items-center">
-    <input type="text" name="query" value="{{ query }}" placeholder="Пошук за назвою" class="border p-2 rounded">
+    <form method="get" action="{% url 'task_list' %}" class="mb-4 space-y-2">
+        <input type="text" name="query" value="{{ query }}" placeholder="Пошук..." class="border p-2 w-full rounded" />
+        <select name="collection" class="border p-2 w-full rounded">
+            <option value="">Всі колекції</option>
+            {% for col in collections %}
+                <option value="{{ col.id }}" {% if collection_filter == col.id|stringformat:"d" %}selected{% endif %}>
+                    {{ col.name }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 w-full">Фільтрувати</button>
+    </form>
 
-    <select name="collection" class="border p-2 rounded">
-        <option value="">Всі колекції</option>
-        {% for col in collections %}
-            <option value="{{ col.id }}" {% if collection_filter == col.id|stringformat:"d" %}selected{% endif %}>
-                {{ col.name }}
-            </option>
-        {% endfor %}
-    </select>
+    <a href="{% url 'add_task' %}" class="inline-block mb-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Додати задачу</a>
 
-    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded shadow">
-        Пошук
-    </button>
-</form>
-
-{% if tasks %}
-    <ul class="space-y-4">
+    <ul>
         {% for task in tasks %}
-            <li class="p-4 rounded shadow-md {% if task.done %}bg-green-200{% else %}bg-red-200{% endif %}">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-semibold">{{ task.title }}</h3>
-                        {% if task.deadline %}
-                            <p class="text-gray-600 text-sm">Дедлайн: {{ task.deadline }}</p>
-                        {% endif %}
-                        {% if task.collection %}
-                            <p class="text-gray-600 text-sm">Колекція: {{ task.collection.name }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="flex gap-4 items-center">
-                        <a href="{% url 'edit_task' task.id %}" class="text-blue-500 hover:underline">Редагувати</a>
-                        <form method="post" action="{% url 'delete_task' task.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="text-red-500 hover:underline">Видалити</button>
-                        </form>
-                        <a href="{% url 'complete_task' task.id %}" class="text-green-500 hover:underline">
-                            {% if task.done %}
-                                Помітити як невиконане
-                            {% else %}
-                                Помітити як виконане
-                            {% endif %}
-                        </a>
-                    </div>
+            <li class="flex items-center justify-between mb-2 p-2 border rounded {% if task.done %}bg-green-100{% else %}bg-red-100{% endif %}">
+                <div>
+                    <span class="block font-semibold">{{ task.title }}</span>
+                    {% if task.collection %}
+                        <span class="text-sm text-gray-600">Колекція: {{ task.collection.name }}</span><br>
+                    {% endif %}
+                    {% if task.deadline %}
+                        <span class="text-sm text-gray-500">Дедлайн: {{ task.deadline }}</span>
+                    {% endif %}
+                </div>
+                <div class="ml-4 text-sm">
+                    <a href="{% url 'complete_task' task.id %}" class="text-blue-600 mr-2">
+                        {% if task.done %}[невиконано]{% else %}[виконати]{% endif %}
+                    </a>
+                    <a href="{% url 'edit_task' task.id %}" class="text-yellow-600 mr-2">[редагувати]</a>
+                    <form method="post" action="{% url 'delete_task' task.id %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-red-600">[видалити]</button>
+                    </form>
                 </div>
             </li>
+        {% empty %}
+            <li>Задач не знайдено.</li>
         {% endfor %}
     </ul>
-{% else %}
-    <p class="text-gray-600">Задач поки немає. Додайте нову!</p>
-{% endif %}
+</div>
 {% endblock %}
