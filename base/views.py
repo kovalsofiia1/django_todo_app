@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
-
+from .forms import TaskForm
 
 def register(request):
     if request.method == 'POST':
@@ -47,43 +47,17 @@ def task_list(request):
 
 @login_required
 def add_task(request):
-    error = ''
     if request.method == 'POST':
-        title = request.POST['title'].strip()
-        deadline = request.POST.get('deadline', '').strip()
-        collection_id = request.POST.get('collection')
-        collection = None
-
-        if collection_id:
-            try:
-                collection = Collection.objects.get(id=collection_id, owner=request.user)
-            except Collection.DoesNotExist:
-                collection = None
-
-        # Перевірка формату дати
-        if deadline:
-            try:
-                from datetime import datetime
-                datetime.strptime(deadline, '%Y-%m-%d')  # Перевірка формату
-            except ValueError:
-                error = 'Невірний формат дати. Використовуйте YYYY-MM-DD.'
-
-        if not error:
-            Task.objects.create(
-                title=title,
-                collection=collection,
-                deadline=deadline if deadline else None,
-                owner=request.user
-            )
+        form = TaskForm(request.POST, user=request.user)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.owner = request.user
+            task.save()
             return redirect('task_list')
+    else:
+        form = TaskForm(user=request.user)
 
-    collections = Collection.objects.filter(owner=request.user)
-    return render(request, 'base/add_task.html', {
-        'collections': collections,
-        'error': error,
-        'task': request.POST  # щоб заповнити попередні значення
-    })
-
+    return render(request, 'base/task_form.html', {'form': form})
 
 @login_required
 def complete_task(request, task_id):
@@ -102,39 +76,18 @@ def delete_task(request, task_id):
 @login_required
 def edit_task(request, task_id):
     task = get_object_or_404(Task, id=task_id, owner=request.user)
-    error = ''
 
     if request.method == 'POST':
-        title = request.POST['title'].strip()
-        deadline = request.POST.get('deadline', '').strip()
-        collection_id = request.POST.get('collection')
-        collection = None
-
-        if collection_id:
-            try:
-                collection = Collection.objects.get(id=collection_id, owner=request.user)
-            except Collection.DoesNotExist:
-                collection = None
-
-        # Перевірка формату дати
-        if deadline:
-            try:
-                from datetime import datetime
-                datetime.strptime(deadline, '%Y-%m-%d')  # Перевірка формату
-            except ValueError:
-                error = 'Невірний формат дати. Використовуйте YYYY-MM-DD.'
-
-        if not error:
-            task.title = title
-            task.deadline = deadline if deadline else None
-            task.collection = collection
-            task.save()
+        form = TaskForm(request.POST, instance=task, user=request.user)
+        if form.is_valid():
+            form.save()
             return redirect('task_list')
+    else:
+        form = TaskForm(instance=task, user=request.user)
 
     return render(request, 'base/task_form.html', {
-        'task': task,
-        'collections': Collection.objects.filter(owner=request.user),
-        'error': error
+        'form': form,
+        'task': task
     })
 
 @login_required
