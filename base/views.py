@@ -12,11 +12,10 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('task_list')
+            return redirect('task_list')  # або redirect('/')
     else:
         form = UserCreationForm()
     return render(request, 'base/register.html', {'form': form})
-
 
 def welcome(request):
     if request.user.is_authenticated:
@@ -29,7 +28,8 @@ def task_list(request):
     query = request.GET.get('query', '')  # Отримуємо пошуковий запит
     collection_filter = request.GET.get('collection', '')  # Отримуємо параметр фільтрації по колекції (як рядок)
 
-    tasks = Task.objects.all()
+    tasks = Task.objects.filter(owner=request.user)
+    collections = Collection.objects.filter(owner=request.user)
 
     if query:
         tasks = tasks.filter(title__icontains=query)  # Пошук по назві задачі
@@ -37,7 +37,7 @@ def task_list(request):
     if collection_filter:
         tasks = tasks.filter(collection_id=collection_filter)  # Фільтрація по колекції
 
-    collections = Collection.objects.all()  # Отримуємо всі колекції для фільтрації
+    # collections = Collection.objects.all()  # Отримуємо всі колекції для фільтрації
     return render(request, 'base/task_list.html', {
         'tasks': tasks,
         'collections': collections,
@@ -87,7 +87,7 @@ def add_task(request):
 
 @login_required
 def complete_task(request, task_id):
-    task = get_object_or_404(Task, id=task_id)
+    task = get_object_or_404(Task, id=task_id, owner=request.user)
     task.done = not task.done  # Перемикаємо статус виконаного завдання
     task.save()
     return redirect('task_list')  # Після зміни статусу повертаємося на список завдань

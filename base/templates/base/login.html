@@ -22,6 +22,8 @@
                     {% endif %}
                 </div>
             {% endfor %}
+        <input type="hidden" name="next" value="{% url 'task_list' %}">
+
             <button type="submit" class="w-full bg-blue-600 text-white text-lg py-3 rounded-lg hover:bg-blue-700 transition">Увійти</button>
         </form>
         <p class="mt-6 text-center text-gray-600 text-sm">

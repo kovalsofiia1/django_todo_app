@@ -21,7 +21,7 @@
                 {% endfor %}
             </select>
 
-            <input type="date" name="deadline" value="{{ task.deadline|default:'' }}" class="border p-2 w-full mb-4 rounded" />
+            <input type="date" name="deadline" value="{{ task.deadline|date:'Y-m-d'|default:'' }}" class="border p-2 w-full mb-4 rounded" />
 
         {% if error %}
     <p class="text-red-500 mb-4">{{ error }}</p>

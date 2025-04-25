@@ -42,6 +42,9 @@ INSTALLED_APPS = [
 
 ]
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -125,5 +128,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/'
+# settings.py
+LOGIN_REDIRECT_URL = 'task_list'
+
 LOGOUT_REDIRECT_URL = 'welcome'
